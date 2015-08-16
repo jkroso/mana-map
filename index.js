@@ -27,7 +27,7 @@ class MapElement extends Element {
     var center = value.get('center')
     if (center === dom.center) return
     dom.center = center
-    map.panTo(center)
+    Promise.resolve(center).then((center) => map.panTo(center))
   }
   updateChildren(children) {
     const {markers=[],map} = this.dom
