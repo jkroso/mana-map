@@ -16,7 +16,7 @@ class MapElement extends Element {
     this.mergeParams(params)
   }
   updateParams(params, dom)  {
-    super.updateParams(params)
+    super.updateParams(params, dom)
     const {cursor:{value}} = params
     const {map} = dom
     if (dom.animating) return
@@ -53,7 +53,7 @@ class MapElement extends Element {
 
 const onMount = (dom, {params:{cursor}}) => {
   const map = dom.map = new gmaps.Map(dom, {
-    center: cursor.value.get('center'),
+    center: {lat:0, lng:0},
     zoom: cursor.value.get('zoom'),
     disableDefaultUI: true,
     zoomControl: true,
@@ -66,26 +66,28 @@ const onMount = (dom, {params:{cursor}}) => {
   })
 
   dom.center = cursor.value.get('center')
-
-  var dragging = false
-  gmaps.event.addListener(map, 'idle', () => dom.animating = dragging)
-  gmaps.event.addListener(map, 'dragstart', () => dom.animating = dragging = true)
-  gmaps.event.addListener(map, 'dragend', () => dragging = false)
-  gmaps.event.addListener(map, 'zoom_changed', () => dom.animating = true)
-  gmaps.event.addListener(map, 'bounds_changed', () => {
-    const center = map.getCenter()
-    const bounds = map.getBounds()
-    const sw = bounds.getSouthWest()
-    const ne = bounds.getNorthEast()
-    cursor.value = cursor.value.set('bounds', {
-      top: ne.lat(),
-      right: ne.lng(),
-      bottom: sw.lat(),
-      left: sw.lng()
-    }).set('center', {
-      lat: center.lat(),
-      lng: center.lng()
-    }).set('zoom', map.getZoom())
+  Promise.resolve(dom.center).then(center => {
+    map.setCenter(center)
+    var dragging = false
+    gmaps.event.addListener(map, 'idle', () => dom.animating = dragging)
+    gmaps.event.addListener(map, 'dragstart', () => dom.animating = dragging = true)
+    gmaps.event.addListener(map, 'dragend', () => dragging = false)
+    gmaps.event.addListener(map, 'zoom_changed', () => dom.animating = true)
+    gmaps.event.addListener(map, 'bounds_changed', () => {
+      const center = map.getCenter()
+      const bounds = map.getBounds()
+      const sw = bounds.getSouthWest()
+      const ne = bounds.getNorthEast()
+      cursor.value = cursor.value.set('bounds', {
+        top: ne.lat(),
+        right: ne.lng(),
+        bottom: sw.lat(),
+        left: sw.lng()
+      }).set('center', {
+        lat: center.lat(),
+        lng: center.lng()
+      }).set('zoom', map.getZoom())
+    })
   })
 }
 
