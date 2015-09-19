@@ -1,5 +1,5 @@
+const {JSX,Element,NODE} = require('mana')
 const GoogleMarker = require('./marker')
-const {JSX,Element} = require('mana')
 const gmaps = google.maps
 
 /**
@@ -15,10 +15,9 @@ class MapElement extends Element {
     super('div', {className:'google-map'}, markers, {mount:onMount, unmount:onUnMount})
     this.mergeParams(params)
   }
-  updateParams(params)  {
+  updateParams(params, dom)  {
     super.updateParams(params)
     const {cursor:{value}} = params
-    const {dom} = this
     const {map} = dom
     if (dom.animating) return
     // sync zoom
@@ -29,33 +28,30 @@ class MapElement extends Element {
     dom.center = center
     Promise.resolve(center).then((center) => map.panTo(center))
   }
-  updateChildren(children) {
-    const {markers=[],map} = this.dom
+  updateChildren(children, dom) {
+    const {markers=[],map} = dom
     const newMarkers = []
     children.forEach(child => {
       const {location} = child.params
       // attempt to reuse an old marker
       for (var i = 0; i < markers.length; i++) {
         var marker = markers[i]
-        var l = marker.node.params.location
-        if (l.lat == location.lat && l.lng == location.lng) {
-          marker.node = marker.node.update(child)
+        if (marker.lat == location.lat && marker.lng == location.lng) {
+          marker.node[NODE].update(child, marker.node)
           marker.draw()
           newMarkers.push(marker)
           markers.splice(i, 1)
           return
         }
       }
-      newMarkers.push(new GoogleMarker(map, child))
+      newMarkers.push(new GoogleMarker(map, child.toDOM(), location))
     })
     markers.forEach(m => m.setMap(null))
-    this.dom.markers = newMarkers
+    dom.markers = newMarkers
   }
 }
 
-const onMount = node => {
-  const {params:{cursor}, dom} = node
-
+const onMount = (dom, {params:{cursor}}) => {
   const map = dom.map = new gmaps.Map(dom, {
     center: cursor.value.get('center'),
     zoom: cursor.value.get('zoom'),
@@ -93,8 +89,8 @@ const onMount = node => {
   })
 }
 
-const onUnMount = ({dom:{map}}) => {
-  gmaps.event.clearInstanceListeners(map)
+const onUnMount = (dom) => {
+  gmaps.event.clearInstanceListeners(dom.map)
 }
 
 /**

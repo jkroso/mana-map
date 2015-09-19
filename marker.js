@@ -8,9 +8,11 @@ const {OverlayView,LatLng} = google.maps
  */
 
 class Marker extends OverlayView {
-  constructor(map, node) {
+  constructor(map, node, location) {
     super()
     this.node = node
+    this.lat = location.lat
+    this.lng = location.lng
     this.setMap(map)
   }
 
@@ -19,7 +21,7 @@ class Marker extends OverlayView {
    */
 
   onAdd() {
-    this.getPanes().overlayLayer.appendChild(this.node.toDOM())
+    this.getPanes().overlayLayer.appendChild(this.node)
   }
 
   /**
@@ -28,10 +30,10 @@ class Marker extends OverlayView {
    */
 
   draw() {
-    const {dom, params:{location}} = this.node
     const projection = this.getProjection()
     if (!projection) return
-    const {x,y} = projection.fromLatLngToDivPixel(new LatLng(location.lat, location.lng))
+    const dom = this.node
+    const {x,y} = projection.fromLatLngToDivPixel(new LatLng(this.lat, this.lng))
     dom.style.left = (x - dom.clientWidth / 2) + 'px'
     dom.style.top =  (y - dom.clientHeight) + 'px'
   }
@@ -42,7 +44,7 @@ class Marker extends OverlayView {
    */
 
   onRemove() {
-    this.node.dom.parentNode.removeChild(this.node.dom)
+    this.node.parentNode.removeChild(this.node)
   }
 }
 
