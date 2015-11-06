@@ -19,9 +19,10 @@
     </style>
     <script src="https://maps.googleapis.com/maps/api/js?v=3"></script>
     <script type="text/javascript">
-      const immutable = require('immutable').fromJS
-      const {App,JSX} = require('mana')
-      const {Map,Marker} = require('./')
+      import {fromJS as immutable} from 'immutable'
+      import {Map,Marker} from './'
+      import {App,JSX} from 'mana'
+
       const data = immutable({zoom: 12}).set('center', {lat: -37.77, lng: 175.26})
       const markers = [
         {lat:-37.77,lng:175.26},

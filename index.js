@@ -1,5 +1,6 @@
-const {JSX,Element,NODE} = require('mana')
-const GoogleMarker = require('./marker')
+import {JSX,Element,NODE} from 'mana'
+import GoogleMarker from './marker'
+
 const gmaps = google.maps
 
 /**
