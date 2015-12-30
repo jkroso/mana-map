@@ -4,15 +4,16 @@
   "description": "Google maps UI wrapper for Mana",
   "keywords": ["mana","google","map"],
   "dependencies": {
-    "mana": "jkroso/mana"
+    "mana": "jkroso/mana",
+    "easy-style": "1"
   },
   "devDependencies": {
     "serve": "jkroso/serve",
     "immutable": "3"
   },
-  "transpile": [["*.js", "!sourcegraph/babel->js", {"jsxPragma": "JSX", "stage": 0}]],
+  "transpile": [["*.js", "!sourcegraph/babel->js", {"stage": 0}]],
   "repository": "git://github.com/jkroso/mana-map.git",
   "author": "Jake Rosoman",
-  "files": ["index.js", "marker.js", "style.css"],
+  "files": ["index.js"],
   "license": "MIT"
 }

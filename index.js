@@ -1,5 +1,5 @@
 import {JSX,Element,NODE} from 'mana'
-import GoogleMarker from './marker'
+import {style} from 'easy-style'
 
 const gmaps = google.maps
 
@@ -11,11 +11,12 @@ const gmaps = google.maps
  * @return {<div/>}
  */
 
-class MapElement extends Element {
+export default class MapElement extends Element {
   constructor(params, markers) {
-    super('div', {className:'google-map'}, markers, {mount:onMount, unmount:onUnMount})
+    super('div', {}, markers)
     this.mergeParams(params)
   }
+
   updateParams(params, dom)  {
     super.updateParams(params, dom)
     const {cursor:{value}} = params
@@ -29,6 +30,7 @@ class MapElement extends Element {
     dom.center = center
     Promise.resolve(center).then((center) => map.panTo(center))
   }
+
   updateChildren(children, dom) {
     const {markers=[],map} = dom
     const newMarkers = []
@@ -45,56 +47,87 @@ class MapElement extends Element {
           return
         }
       }
-      newMarkers.push(new GoogleMarker(map, child.toDOM(), location))
+      newMarkers.push(new MarkerOverlay(map, child.toDOM(), location))
     })
     markers.forEach(m => m.setMap(null))
     dom.markers = newMarkers
   }
-}
 
-const onMount = (dom, {params:{cursor}}) => {
-  const map = dom.map = new gmaps.Map(dom, {
-    center: {lat:0, lng:0},
-    zoom: cursor.value.get('zoom'),
-    disableDefaultUI: true,
-    zoomControl: true,
-    zoomControlOptions: {
-      position: google.maps.ControlPosition.RIGHT_TOP,
-      style: 1
-    },
-    scrollwheel: false,
-    minZoom: 2
-  })
-
-  dom.center = cursor.value.get('center')
-  Promise.resolve(dom.center).then(center => {
-    map.setCenter(center)
-    var dragging = false
-    gmaps.event.addListener(map, 'idle', () => dom.animating = dragging)
-    gmaps.event.addListener(map, 'dragstart', () => dom.animating = dragging = true)
-    gmaps.event.addListener(map, 'dragend', () => dragging = false)
-    gmaps.event.addListener(map, 'zoom_changed', () => dom.animating = true)
-    gmaps.event.addListener(map, 'bounds_changed', () => {
-      const center = map.getCenter()
-      const bounds = map.getBounds()
-      const sw = bounds.getSouthWest()
-      const ne = bounds.getNorthEast()
-      cursor.value = cursor.value.set('bounds', {
-        top: ne.lat(),
-        right: ne.lng(),
-        bottom: sw.lat(),
-        left: sw.lng()
-      }).set('center', {
-        lat: center.lat(),
-        lng: center.lng()
-      }).set('zoom', map.getZoom())
+  onMount(dom) {
+    const cursor = this.params.cursor
+    const map = dom.map = new gmaps.Map(dom, {
+      center: {lat:0, lng:0},
+      zoom: cursor.value.get('zoom'),
+      disableDefaultUI: true,
+      zoomControl: true,
+      zoomControlOptions: {
+        position: google.maps.ControlPosition.RIGHT_TOP,
+        style: 1
+      },
+      scrollwheel: false,
+      minZoom: 2
     })
-  })
+
+    dom.center = cursor.value.get('center')
+    Promise.resolve(dom.center).then(center => {
+      map.setCenter(center)
+      var dragging = false
+      gmaps.event.addListener(map, 'idle', () => dom.animating = dragging)
+      gmaps.event.addListener(map, 'dragstart', () => dom.animating = dragging = true)
+      gmaps.event.addListener(map, 'dragend', () => dragging = false)
+      gmaps.event.addListener(map, 'zoom_changed', () => dom.animating = true)
+      gmaps.event.addListener(map, 'bounds_changed', () => {
+        const center = map.getCenter()
+        const bounds = map.getBounds()
+        const sw = bounds.getSouthWest()
+        const ne = bounds.getNorthEast()
+        cursor.value = cursor.value.set('bounds', {
+          top: ne.lat(),
+          right: ne.lng(),
+          bottom: sw.lat(),
+          left: sw.lng()
+        }).set('center', {
+          lat: center.lat(),
+          lng: center.lng()
+        }).set('zoom', map.getZoom())
+      })
+    })
+  }
+
+  onUnMount(dom) {
+    gmaps.event.clearInstanceListeners(dom.map)
+  }
 }
 
-const onUnMount = (dom) => {
-  gmaps.event.clearInstanceListeners(dom.map)
-}
+const markerClass = style({
+  position: 'absolute',
+  marginTop: '-7px',
+  zIndex: 1000,
+  left: 0,
+  top: 0,
+  '> .arrow': {
+    border: '7px dashed rgb(100,100,100)',
+    borderRightColor: 'transparent',
+    borderLeftColor: 'transparent',
+    borderTopStyle: 'solid',
+    borderBottom: 'none',
+    position: 'absolute',
+    marginLeft: '-7px',
+    lineHeight: '0',
+    top: '27px',
+    left: '50%',
+    width: '0',
+    height: '0',
+    bottom: '0'
+  },
+  '> .content': {
+    backgroundColor: 'rgb(100,100,100)',
+    padding: '8px 10px 7px 10px',
+    borderRadius: '2px',
+    textAlign: 'center',
+    color: 'white'
+  }
+})
 
 /**
  * A simple map marker which can have any content you like
@@ -104,13 +137,56 @@ const onUnMount = (dom) => {
  * @return {<div/>}
  */
 
-const Marker = (params, children) =>
-  <div class='marker'>
-    <div class='marker-arrow'></div>
-    <div class='marker-inner'>{children}</div>
+export const Marker = (params, children) =>
+  <div class={markerClass}>
+    <div class="arrow"/>
+    <div class="content">{children}</div>
   </div>.mergeParams(params)
 
-const Map = (params, children) => new MapElement(params, children)
+/**
+ * A custom google maps marker
+ *
+ * @param {google.maps.Map} map
+ * @param {VirtualElement} node
+ */
 
-export default Map
-export {Marker,Map}
+class MarkerOverlay extends gmaps.OverlayView {
+  constructor(map, node, location) {
+    super()
+    this.node = node
+    this.lat = location.lat
+    this.lng = location.lng
+    this.setMap(map)
+  }
+
+  /**
+   * onAdd is called when the map is ready to receive the marker
+   */
+
+  onAdd() {
+    this.getPanes().overlayLayer.appendChild(this.node)
+  }
+
+  /**
+   * draw is called whenever the map bounds change. Here we need to place
+   * the Marker over its target
+   */
+
+  draw() {
+    const projection = this.getProjection()
+    if (!projection) return
+    const dom = this.node
+    const {x,y} = projection.fromLatLngToDivPixel(new gmaps.LatLng(this.lat, this.lng))
+    dom.style.left = (x - dom.clientWidth / 2) + 'px'
+    dom.style.top =  (y - dom.clientHeight) + 'px'
+  }
+
+  /**
+   * The onRemove() method will be called automatically from the API if
+   * we ever set the overlay's map property to 'null'
+   */
+
+  onRemove() {
+    this.node.parentNode.removeChild(this.node)
+  }
+}
