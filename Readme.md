@@ -4,12 +4,12 @@ A Google-Maps UI wrapper for Mana
 
 ## Installation
 
-`npm install jkroso/mana-map`
+`npm install mana-map`
 
 then in your app:
 
 ```js
-const {Map,Marker} = require('mana-map')
+import Map,{Marker} from 'mana-map'
 ```
 
 ## API
