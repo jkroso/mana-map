@@ -28,18 +28,18 @@ export default class MapElement extends Element {
     var center = value.get('center')
     if (center === dom.center) return
     dom.center = center
-    Promise.resolve(center).then((center) => map.panTo(center))
+    Promise.resolve(center).then(center => map.panTo(center))
   }
 
   updateChildren(children, dom) {
     const {markers=[],map} = dom
     const newMarkers = []
     children.forEach(child => {
-      const {location} = child.params
+      const {location:[lng,lat]} = child.params
       // attempt to reuse an old marker
       for (var i = 0; i < markers.length; i++) {
         var marker = markers[i]
-        if (marker.lat == location.lat && marker.lng == location.lng) {
+        if (marker.lat == lat && marker.lng == lng) {
           marker.node[NODE].update(child, marker.node)
           marker.draw()
           newMarkers.push(marker)
@@ -47,7 +47,7 @@ export default class MapElement extends Element {
           return
         }
       }
-      newMarkers.push(new MarkerOverlay(map, child.toDOM(), location))
+      newMarkers.push(new MarkerOverlay(map, child.toDOM(), lng, lat))
     })
     markers.forEach(m => m.setMap(null))
     dom.markers = newMarkers
@@ -132,7 +132,7 @@ const markerClass = style({
 /**
  * A simple map marker which can have any content you like
  *
- * @param  {Object} params; {location:{lat,lng}}
+ * @param  {Object} params; {location:[lat,lng]}
  * @param  {Array} children;
  * @return {<div/>}
  */
@@ -151,11 +151,11 @@ export const Marker = (params, children) =>
  */
 
 class MarkerOverlay extends gmaps.OverlayView {
-  constructor(map, node, location) {
+  constructor(map, node, lng, lat) {
     super()
     this.node = node
-    this.lat = location.lat
-    this.lng = location.lng
+    this.lng = lng
+    this.lat = lat
     this.setMap(map)
   }
 
