@@ -19,13 +19,14 @@ export default class MapElement extends Element {
 
   updateParams(params, dom)  {
     super.updateParams(params, dom)
-    const {cursor:{value}} = params
+    const {cursor} = params
     const {map} = dom
     if (dom.animating) return
     // sync zoom
-    if (map.getZoom() != value.get('zoom')) map.setZoom(value.get('zoom'))
+    const zoom = cursor.get('zoom').value
+    if (map.getZoom() != zoom) map.setZoom(zoom)
     // sync center
-    var center = value.get('center')
+    const center = cursor.get('center').value
     if (center === dom.center) return
     dom.center = center
     Promise.resolve(center).then(center => map.panTo(center))
@@ -35,7 +36,7 @@ export default class MapElement extends Element {
     const {markers=[],map} = dom
     const newMarkers = []
     children.forEach(child => {
-      const {location:[lng,lat]} = child.params
+      const {location:{lng,lat}} = child.params
       // attempt to reuse an old marker
       for (var i = 0; i < markers.length; i++) {
         var marker = markers[i]
@@ -57,7 +58,7 @@ export default class MapElement extends Element {
     const cursor = this.params.cursor
     const map = dom.map = new gmaps.Map(dom, {
       center: {lat:0, lng:0},
-      zoom: cursor.value.get('zoom'),
+      zoom: cursor.get('zoom').value,
       disableDefaultUI: true,
       zoomControl: true,
       zoomControlOptions: {
@@ -68,7 +69,7 @@ export default class MapElement extends Element {
       minZoom: 2
     })
 
-    dom.center = cursor.value.get('center')
+    dom.center = cursor.get('center').value
     Promise.resolve(dom.center).then(center => {
       map.setCenter(center)
       var dragging = false
@@ -81,15 +82,19 @@ export default class MapElement extends Element {
         const bounds = map.getBounds()
         const sw = bounds.getSouthWest()
         const ne = bounds.getNorthEast()
-        cursor.value = cursor.value.set('bounds', {
-          top: ne.lat(),
-          right: ne.lng(),
-          bottom: sw.lat(),
-          left: sw.lng()
-        }).set('center', {
-          lat: center.lat(),
-          lng: center.lng()
-        }).set('zoom', map.getZoom())
+        cursor.merge({
+          bounds: {
+            top: ne.lat(),
+            right: ne.lng(),
+            bottom: sw.lat(),
+            left: sw.lng()
+          },
+          center: {
+            lat: center.lat(),
+            lng: center.lng()
+          },
+          zoom: map.getZoom()
+        })
       })
     })
   }

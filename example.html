@@ -15,11 +15,10 @@
     </style>
     <script src="https://maps.googleapis.com/maps/api/js?v=3"></script>
     <script type="text/javascript">
-      import {fromJS as immutable} from 'immutable'
       import Map,{Marker} from './index'
       import {App,JSX} from 'mana'
 
-      const data = immutable({zoom: 12}).set('center', {lat: -37.77, lng: 175.26})
+      const data = {zoom: 12, center: {lat: -37.77, lng: 175.26}, bounds: {}}
       const markers = [
         {lat:-37.77,lng:175.26},
         {lat:-37.78,lng:175.29},
@@ -33,7 +32,7 @@
       }
 
       const app = new App(data, cursor => {
-        const bounds = cursor.value.get('bounds', {})
+        const bounds = cursor.get('bounds').value
         const pins = markers.map((m,i) => {
           if (!between(m.lat, bounds.top, bounds.bottom)) return
           if (!between(m.lng, bounds.left, bounds.right)) return

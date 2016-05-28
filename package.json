@@ -8,8 +8,7 @@
     "easy-style": "1"
   },
   "devDependencies": {
-    "serve": "jkroso/serve",
-    "immutable": "3"
+    "serve": "jkroso/serve"
   },
   "transpile": [["*.js", "!sourcegraph/babel->js", {"stage": 0}]],
   "repository": "git://github.com/jkroso/mana-map.git",
