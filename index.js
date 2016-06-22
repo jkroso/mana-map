@@ -102,11 +102,16 @@ export default class MapElement extends Element {
   onUnMount(dom) {
     gmaps.event.clearInstanceListeners(dom.map)
   }
+
+  // TODO: Notify children correctly
+  runLifeCycleMethod(name, dom) {
+    this[name] && this[name](dom)
+  }
 }
 
 const markerClass = style({
   position: 'absolute',
-  marginTop: '-7px',
+  marginTop: -7,
   zIndex: 1000,
   left: 0,
   top: 0,
@@ -117,18 +122,18 @@ const markerClass = style({
     borderTopStyle: 'solid',
     borderBottom: 'none',
     position: 'absolute',
-    marginLeft: '-7px',
-    lineHeight: '0',
-    top: '27px',
+    marginLeft: -7,
+    lineHeight: 0,
     left: '50%',
-    width: '0',
-    height: '0',
-    bottom: '0'
+    top: 27,
+    width: 0,
+    height: 0,
+    bottom: 0
   },
   '> .content': {
     backgroundColor: 'rgb(100,100,100)',
     padding: '8px 10px 7px 10px',
-    borderRadius: '2px',
+    borderRadius: 2,
     textAlign: 'center',
     color: 'white'
   }

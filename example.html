@@ -14,7 +14,7 @@
       }
     </style>
     <script src="https://maps.googleapis.com/maps/api/js?v=3"></script>
-    <script type="text/javascript">
+    <script type="application/javascript">
       import Map,{Marker} from './index'
       import {App,JSX} from 'mana'
 
@@ -25,11 +25,7 @@
         {lat:-37.67,lng:175.39},
         {lat:-37.67,lng:175.14},
       ]
-      const between = (n, a, b) => {
-        const min = Math.min(a, b)
-        const max = Math.max(a, b)
-        return n > min && n < max
-      }
+      const between = (n, a, b) => n > Math.min(a, b) && n < Math.max(a, b)
 
       const app = new App(data, cursor => {
         const bounds = cursor.get('bounds').value
@@ -38,7 +34,7 @@
           if (!between(m.lng, bounds.left, bounds.right)) return
           return <Marker location={m}>{i}</Marker>
         })
-        return <Map cursor={cursor}>{pins}</Map>
+        return <Map cursor>{pins}</Map>
       })
 
       window.onload = () => app.mountIn(document.body)
